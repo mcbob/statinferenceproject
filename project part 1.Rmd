@@ -1,0 +1,55 @@
+---
+title: "Statistical Inference Project - Part 1"
+output: pdf_document
+---
+
+Purpose of this project is to investigate the features of averages of simulated random variables. The simulation is carried out by taking averages of 40 random values, coming from exponential distribution with rate parameter $\lambda$ = 0.2. Altogether, 1000 averages are generated using the R function `rexp(40, 0.2)`. The R code used for this project is available at: https://github.com/mcbob/statinferenceproject.
+
+## Theoretical and sample center of distribution
+
+Mean of averages of 40 iid exponential variables should, according to the Law of large numbers, converge to the expected value with the increasing number of observations. The theoretical population mean is $\frac{1}{\lambda}= 5$. The sample mean obtained via simulations is 4.982, sample median 4.936. The convergence of sample mean with increasing number of simulations can be seen in the following figure. Histogram is also provided in the next section.
+
+
+```{r, echo=FALSE}
+set.seed(2222)
+nosim <- 1000
+n <- 40
+lambda <- 0.2
+means <- apply(matrix(rexp(nosim*n,lambda),nosim,n), 1, mean) 
+plot(cumsum(means)/(1:nosim), type = "l", lwd = 2, main = expression(
+    paste("Convergence to population mean ", frac(1,lambda)," = ",5)),
+     xlab = "Number of simulations", ylab = "Mean")
+abline(h = 1/lambda, col = "blue")
+```
+
+## Distribution variance and normality
+
+It follows from the Central limit theorem (CLT) that the variance of the distribution of averages converges (with sufficiently large _n_) to the value of $\frac{\sigma^2}{n}$, where $\sigma$ is the standard deviation. Substituting the sample standard deviation and dividing it by $\sqrt{n}$, we arrive at the sample standard deviation $s_n = 4.9958$, which is very close to the standard deviation of the original exponential distribution  $\sigma = \frac{1}{\lambda} = 5$.
+
+The following figure displays a histogram that gives us a graphical view of the sample variance. The histogram also contains a normal distribution curve. We can thus visually compare the simulated distribution with the theoretical normal distribution implied by the CLT.
+
+```{r, echo=FALSE}
+# histogram with normal curve: http://www.statmethods.net/graphs/density.html
+h<-hist(means, breaks=59, col="green", 
+        xlab=expression(paste("Means of 40 rexp(",lambda,") observations")), 
+        main="Histogram with Normal Curve, Mean and Median") 
+xfit<-seq(min(means),max(means),length=59) 
+yfit<-dnorm(xfit,mean=mean(means),sd=sd(means)) 
+yfit <- yfit*diff(h$mids[1:2])*length(means) 
+lines(xfit, yfit, col="blue", lwd=2)
+abline(v = 1/lambda, col = "black", lwd = 2)
+abline(v = mean(means), col = "navy", lwd = 2, lty = "dashed")
+abline(v = median(means), col = "red", lwd = 2, lty = "dashed")
+legend("topright", col = c("blue", "black", "navy", "red"), 
+       lty = c("solid", "solid", "dashed", "dashed"), lwd = 2,
+       legend = c("Normal distribution", "Population mean",
+                  "Sample mean", "Sample median"))
+```
+
+# Confidence intervals
+
+Now it would be interesting to construct confidence intervals for the simulated samples of exponential distribution.
+
+For each 40 simulated values, we can compute sample mean $\bar{X}$ and sample standard deviation $S$. Then we can evaluate the expression $\bar{X} \pm 1.96 \frac{S}{\sqrt{n}}$. The fraction of averages that lie inside the above computed confidence intervals, is expected to be 95%. This stems from the CLT (for normally distributed averages) and `qnorm(0.975)`$\approx 1.96$.
+
+In our case, the ratio of averages lying inside the confidence interval happens to be 93.1%.
