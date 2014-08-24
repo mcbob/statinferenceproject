@@ -1,0 +1,92 @@
+---
+title: "Statistical Inference Project - Part 2"
+output: pdf_document
+---
+
+This project aims to explore the ToothGrowth dataset, analyze the data, and compare the tooth growth of the guinea pigs, based on the dose size of vitamin C and its delivery method. The R code used for this project is available at: https://github.com/mcbob/statinferenceproject.
+
+## ToothGrowth Dataset
+
+The dataset contains three variables. Each observation represents a guinea pig that was provided with a vitamin C and its tooth growth was measured. There are 10 guinea pigs for each combination of dose size and supplement type, totalling 60 guinea pigs. The variables are:
+
+* numeric variable `len` -- tooth length,
+* factor variable `supp` -- supplement type with two levels, 30 observations each:
+    + `VC` -- for vitamin C (ascorbic acid)
+    + `OJ` -- orange juice
+* numeric variable `dose` -- dose of vitamin C in milligrams
+
+Short summary of the dataset and a coplot (from `?Toothgrowth`) is presented below:
+
+```{r, echo=FALSE}
+data(ToothGrowth)
+summary(ToothGrowth)
+coplot(len ~ dose | supp, data = ToothGrowth, panel = panel.smooth,
+       xlab = "ToothGrowth: length vs dose, by type of supplement")
+```
+
+```{r, results='hide', echo=FALSE}
+# Some descriptive statistics
+summary(means)
+mean(ToothGrowth$len)
+sd(ToothGrowth$len)
+# hist(ToothGrowth$len, breaks = 15)
+
+# quick linear model fit to see significancies
+lmlen <- lm(len ~ supp + dose, ToothGrowth)
+summary(lmlen)
+```
+
+## Comparison of tooth growth by supplement type and dose size
+
+```{r, echo=FALSE, results='hide'}
+# Hypothesis test
+data <- subset(ToothGrowth, dose != 1)
+t.test(len ~ dose, paired = FALSE, var.equal = FALSE, data)
+
+data <- subset(ToothGrowth, dose != 2)
+t.test(len ~ dose, paired = FALSE, var.equal = FALSE, data)
+
+data <- subset(ToothGrowth, dose != 0.5)
+t.test(len ~ dose, paired = FALSE, var.equal = FALSE, data)
+```
+
+Firstly, we will test for the influence of vitamin C dose size on tooth growth.
+We test $H_0$ of equal average tooth growth for groups of guinea pigs provided with two different dose sizes (denoted by an index at $\mu$ in the following table with results summary).
+
+$H_0$|$1-\frac{\alpha}{2}$|Result
+-----|--------------------|--------
+$\mu_2 = \mu_{0.5}$ |0.975| $H_0$ rejected
+$\mu_1 = \mu_{0.5}$ |0.975| $H_0$ rejected
+$\mu_2 = \mu_1$ |0.975| $H_0$ rejected
+
+Secondly, we will test for the influence of supplement type on tooth growth. We test $H_0$ of equal average tooth growth for both orange juice and ascorbic acid. We cannot reject $H_0$ with the two-tailed *t*-test at $1-\frac{\alpha}{2}=0.975$. Using only one-tailed test, we could however reject the null hypothesis of equal tooth growth for both supplement types in favor of $H_a: \mu_{OJ} > \mu_{VC}$. 
+
+```{r, echo=FALSE, results='hide'}
+
+t.test(len ~ supp, paired = FALSE, var.equal = FALSE, ToothGrowth)
+t.test(len ~ supp, paired = FALSE, var.equal = FALSE, ToothGrowth, 
+       alternative = "greater")
+
+data <- subset(ToothGrowth, dose == 0.5)
+t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data)
+
+data <- subset(ToothGrowth, dose == 1)
+t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data)
+
+data <- subset(ToothGrowth, dose == 2)
+t.test(len ~ supp, paired = FALSE, var.equal = FALSE, data)
+```
+
+If we compare the tooth growth of groups with different supplement type, while we filter for the same dose size, we can reject the null hypothesis in two of the three cases:
+
+$H_0$|$1-\frac{\alpha}{2}$|Result
+-----|--------------------|--------
+$\mu_{OJ} = \mu_{VC}$ for dose size 0.5 mg |0.975| $H_0$ rejected
+$\mu_{OJ} = \mu_{VC}$ for dose size 1 mg|0.975| $H_0$ rejected
+$\mu_{OJ} = \mu_{VC}$ for dose size 2 mg|0.975| $H_0$ not rejected
+
+## Conclusions and assumptions
+
+We demonstrated that the groups of guinea pigs with different dose sizes experienced different tooth growth. We also showed that while controling for the dose size, groups with different supplement type experienced different tooth growth.
+
+Though we did not test for normality of our data, we assumed the tooth growth $len$ variable to be normal. We also made an assumption that the data were independently and identically distributed, or sampled randomly.
